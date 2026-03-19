@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据工程师：深渊求生 | Data Engineer Survival</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Noto+Sans+SC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --neon-green: #00ff41;
+            --neon-red: #ff003c;
+            --neon-blue: #00f0ff;
+            --neon-yellow: #ffee00;
+            --dark-bg: #0a0a0f;
+            --panel-bg: #111118;
+            --game-width: 1280px;
+            --game-height: 720px;
+        }
+        
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: var(--dark-bg);
+            color: #e0e0e0;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        /* CRT Scanline Effect */
+        .crt::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 2;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+        
+        /* Glitch Animation */
+        @keyframes glitch {
+            0% { transform: translate(0) }
+            20% { transform: translate(-2px, 2px) }
+            40% { transform: translate(-2px, -2px) }
+            60% { transform: translate(2px, 2px) }
+            80% { transform: translate(2px, -2px) }
+            100% { transform: translate(0) }
+        }
+        
+        .glitch {
+            animation: glitch 0.3s infinite;
+            text-shadow: 2px 0 var(--neon-red), -2px 0 var(--neon-blue);
+        }
+        
+        /* Typing Cursor */
+        .cursor::after {
+            content: '▋';
+            animation: blink 1s infinite;
+            color: var(--neon-green);
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        
+        /* Progress Bar */
+        .progress-fill {
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 10px var(--neon-green);
+        }
+        
+        /* Option Cards */
+        .option-card {
+            transition: all 0.3s ease;
+            border: 1px solid #333;
+            background: linear-gradient(135deg, #1a1a24 0%, #111118 100%);
+        }
+        
+        .option-card:hover:not(.disabled) {
+            border-color: var(--neon-green);
+            transform: translateX(5px);
+            box-shadow: -3px 0 15px rgba(0, 255, 65, 0.2);
+            cursor: pointer;
+        }
+        
+        .option-card.selected {
+            border-color: var(--neon-green);
+            background: rgba(0, 255, 65, 0.1);
+        }
+        
+        .option-card.wrong {
+            border-color: var(--neon-red);
+            background: rgba(255, 0, 60, 0.1);
+            animation: shake 0.5s;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        /* Code Rain Background */
+        #canvas-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.1;
+        }
+        
+        /* Terminal Window */
+        .terminal {
+            background: #0c0c12;
+            border: 1px solid #333;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+        }
+        
+        /* Game Container - Fixed 16:9 Aspect Ratio */
+        #game-container {
+            width: var(--game-width);
+            height: var(--game-height);
+            position: relative;
+            z-index: 10;
+            background: linear-gradient(135deg, #0f0f16 0%, #1a1a24 100%);
+            border: 2px solid #333;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        /* Responsive scaling */
+        @media (max-width: 1320px) or (max-height: 760px) {
+            #game-container {
+                transform: scale(0.9);
+            }
+        }
+        
+        @media (max-width: 1200px) or (max-height: 680px) {
+            #game-container {
+                transform: scale(0.8);
+            }
+        }
+        
+        @media (max-width: 1050px) or (max-height: 600px) {
+            #game-container {
+                transform: scale(0.7);
+            }
+        }
+        
+        /* Success Animation */
+        @keyframes successPulse {
+            0% { box-shadow: 0 0 0 0 rgba(0, 255, 65, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(0, 255, 65, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 255, 65, 0); }
+        }
+        
+        .success-ring {
+            animation: successPulse 1.5s infinite;
+        }
+        
+        /* Floating Particles */
+        .particle {
+            position: absolute;
+            pointer-events: none;
+            animation: float 3s ease-in infinite;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+        }
+        
+        /* Boss Health Bar */
+        .boss-health {
+            background: linear-gradient(90deg, var(--neon-red) 0%, #ff6600 100%);
+            transition: width 0.5s ease;
+        }
+        
+        /* Hacker Text Decode Effect */
+        .decode-text {
+            display: inline-block;
+        }
+        
+        /* Header Bar */
+        .game-header {
+            height: 60px;
+            background: linear-gradient(90deg, #1a1a2e 0%, #16213e 100%);
+            border-bottom: 2px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+        }
+        
+        /* Main Content Area */
+        .game-body {
+            flex: 1;
+            display: flex;
+            padding: 20px;
+            gap: 20px;
+            overflow: hidden;
+        }
+        
+        /* Left Sidebar */
+        .sidebar-left {
+            width: 260px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        /* Right Main Panel */
+        .main-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            min-width: 0;
+        }
+        
+        /* Bottom Status Bar */
+        .status-bar {
+            height: 50px;
+            background: #0c0c12;
+            border-top: 1px solid #333;
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            gap: 40px;
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0c0c12;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        
+        /* 增大字号专用样式 */
+        .question-title {
+            font-size: 1.25rem;
+            line-height: 1.5;
+            font-weight: 700;
+        }
+        
+        .question-desc {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #b0b0b0;
+        }
+        
+        .option-text {
+            font-size: 1.05rem;
+            line-height: 1.4;
+            font-weight: 600;
+        }
+        
+        .option-detail {
+            font-size: 0.85rem;
+            line-height: 1.3;
+            color: #888;
+            margin-top: 2px;
+        }
+        
+        .feedback-text {
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+        
+        .story-log-text {
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+        
+        /* 选项容器 - 确保无滚动条 */
+        .options-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex: 1;
+            justify-content: flex-start;
+        }
+        
+        /* 紧凑模式选项卡片 */
+        .option-card-compact {
+            padding: 12px 16px;
+        }
+    </style>
+</head>
+<body class="crt">
+
+    <!-- Matrix Rain Background -->
+    <canvas id="canvas-bg"></canvas>
+
+    <!-- Game Container - Fixed 16:9 -->
+    <div id="game-container">
+        
+        <!-- Header -->
+        <div class="game-header">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded bg-gradient-to-br from-blue-600 to-purple-800 flex items-center justify-center text-lg">👨‍💻</div>
+                <div>
+                    <h1 class="text-lg font-black italic tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
+                        DATA ENGINEER SURVIVAL
+                    </h1>
+                    <p class="text-[10px] text-gray-500 mono tracking-widest">SYSTEM v2.0.16:9</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2 px-3 py-1 rounded bg-gray-900 border border-gray-700">
+                    <span class="text-xs text-gray-400 mono">STAGE</span>
+                    <span class="text-sm font-bold text-yellow-400 mono" id="stage-num">1</span>
+                    <span class="text-xs text-gray-600">/</span>
+                    <span class="text-xs text-gray-500 mono">4</span>
+                </div>
+                <div class="px-3 py-1 rounded bg-gray-900 border border-gray-700">
+                    <span class="text-xs font-bold text-blue-400 mono" id="stage-name">异构数据深渊</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Body -->
+        <div class="game-body">
+            
+            <!-- Left Sidebar: Player Status & Story Log -->
+            <div class="sidebar-left">
+                <!-- Player Card -->
+                <div class="terminal rounded-lg p-4 h-[160px]">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-12 h-12 rounded bg-gradient-to-br from-blue-600 to-purple-800 flex items-center justify-center text-xl">
+                            👨‍💻
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-white text-sm">初级数据工程师</h3>
+                            <p class="text-[10px] text-gray-400 mono">LV.<span id="level">1</span> 实习生</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-[10px] mono">
+                            <span class="text-gray-400">SANITY</span>
+                            <span class="text-green-400" id="sanity-text">100%</span>
+                        </div>
+                        <div class="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                            <div id="sanity-bar" class="h-full bg-gradient-to-r from-green-400 to-green-600 progress-fill" style="width: 100%"></div>
+                        </div>
+                        
+                        <div class="flex justify-between text-[10px] mono mt-2">
+                            <span class="text-gray-400">BOSS HP</span>
+                            <span class="text-red-400" id="boss-hp-text">100%</span>
+                        </div>
+                        <div class="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                            <div id="boss-bar" class="h-full boss-health" style="width: 100%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Story Log -->
+                <div class="terminal rounded-lg flex-1 p-3 overflow-hidden flex flex-col">
+                    <div class="text-[10px] text-gray-500 mono mb-2 border-b border-gray-800 pb-1">MISSION_LOG.txt</div>
+                    <div id="story-text" class="flex-1 overflow-y-auto story-log-text space-y-2 pr-1 mono text-gray-300">
+                        <p class="text-green-400/80">> 系统初始化完成...</p>
+                        <p class="text-green-400/80">> 正在连接公司数据库...</p>
+                        <p class="cursor text-gray-400">> 等待任务分配</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Main Panel: Game Content -->
+            <div class="main-panel">
+                <!-- Question Display Area -->
+                <div class="terminal rounded-lg p-5 flex-1 relative overflow-hidden flex flex-col">
+                    <div class="absolute top-0 right-0 p-3 opacity-10 text-4xl mono font-bold" id="bg-text">01</div>
+                    
+                    <div id="game-content" class="relative z-10 flex-1 flex flex-col min-h-0">
+                        <!-- Question Header - 压缩间距 -->
+                        <div class="mb-3 flex-shrink-0">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="px-2 py-0.5 rounded bg-red-900/50 text-red-300 text-xs font-bold mono border border-red-800">URGENT</span>
+                                <span class="text-xs text-gray-500 mono">FROM: BOSS</span>
+                                <span class="text-xs text-gray-600 mono">|</span>
+                                <span class="text-xs text-gray-500 mono">ID: <span id="task-id">TASK-001</span></span>
+                            </div>
+                            <h2 id="question-title" class="question-title mb-2 text-white"></h2>
+                            <p id="question-desc" class="question-desc"></p>
+                        </div>
+
+                        <!-- Options Container - 无滚动条，自适应高度 -->
+                        <div id="options-container" class="options-wrapper flex-1 min-h-0">
+                            <!-- Options injected by JS -->
+                        </div>
+
+                        <!-- Feedback Area -->
+                        <div id="feedback-area" class="hidden mt-3 p-3 rounded bg-gray-900/80 border-l-4 border-green-500 flex-shrink-0">
+                            <p id="feedback-text" class="feedback-text"></p>
+                        </div>
+                    </div>
+
+                    <!-- Victory Overlay -->
+                    <div id="victory-overlay" class="hidden absolute inset-0 bg-black/95 z-50 flex items-center justify-center flex-col">
+                        <div class="text-6xl mb-4">🏆</div>
+                        <h2 class="text-3xl font-bold text-green-400 mb-3 glitch">MISSION ACCOMPLISHED</h2>
+                        <p class="text-gray-400 text-lg mb-6">你成功存活并升级为 <span class="text-yellow-400 font-bold">大数据架构师</span></p>
+                        <div class="grid grid-cols-3 gap-6 mb-8 text-center">
+                            <div class="bg-gray-900 p-4 rounded border border-gray-800">
+                                <div class="text-xs text-gray-500 mb-1">最终效率</div>
+                                <div class="text-2xl font-bold text-green-400 mono" id="final-efficiency">100%</div>
+                            </div>
+                            <div class="bg-gray-900 p-4 rounded border border-gray-800">
+                                <div class="text-xs text-gray-500 mb-1">总代码行</div>
+                                <div class="text-2xl font-bold text-yellow-400 mono" id="final-lines">670</div>
+                            </div>
+                            <div class="bg-gray-900 p-4 rounded border border-gray-800">
+                                <div class="text-xs text-gray-500 mb-1">剩余理智</div>
+                                <div class="text-2xl font-bold text-blue-400 mono" id="final-sanity">85%</div>
+                            </div>
+                        </div>
+                        <button onclick="location.reload()" class="px-6 py-3 bg-green-600 hover:bg-green-500 text-black font-bold rounded text-base mono transition-all">
+                            [ 重新开始冒险 ]
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Status Bar -->
+        <div class="status-bar">
+            <div class="flex items-center gap-6">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-gray-500 mono uppercase">查询效率</span>
+                    <div class="w-24 h-2 bg-gray-800 rounded-full overflow-hidden">
+                        <div id="stat-efficiency-bar" class="h-full bg-blue-500 transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    <span class="text-sm font-bold text-blue-400 mono w-10" id="stat-efficiency">0%</span>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-gray-500 mono uppercase">代码行数</span>
+                    <span class="text-sm font-bold text-yellow-400 mono" id="stat-lines">0</span>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-gray-500 mono uppercase">技术债务</span>
+                    <span class="text-sm font-bold text-red-400 mono" id="stat-debt">CRITICAL</span>
+                </div>
+            </div>
+            
+            <div class="flex-1"></div>
+            
+            <div class="flex items-center gap-2 text-xs text-gray-600 mono">
+                <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                <span>SYSTEM ONLINE</span>
+                <span class="mx-2">|</span>
+                <span>16:9 DISPLAY MODE</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game State
+        const state = {
+            currentStage: 0,
+            sanity: 100,
+            bossHp: 100,
+            efficiency: 0,
+            linesOfCode: 0,
+            techDebt: 'CRITICAL'
+        };
+
+        // Stage Data
+        const stages = [
+            {
+                id: 1,
+                name: "异构数据深渊",
+                taskId: "TASK-001",
+                title: "老板的需求：分析上个月购买金额最高的前100名用户的手机系统分布",
+                desc: "你面临一个严峻的挑战：用户订单数据在MySQL中，而用户设备信息存储在日志文件的JSON里。时间紧迫，老板在催...",
+                bgText: "01",
+                options: [
+                    {
+                        text: "A. 直接使用MySQL的FEDERATED引擎跨库查询日志文件",
+                        detail: "试图用SQL直接读取本地文件系统...",
+                        correct: false,
+                        feedback: "❌ 连接失败！MySQL无法直接解析JSON日志文件格式。FEDERATED引擎只支持MySQL协议，不支持文件系统。你的SANITY -20",
+                        sanityCost: 20,
+                        bossDamage: 0
+                    },
+                    {
+                        text: "B. 编写Python脚本解析日志，导入MySQL临时表后关联查询",
+                        detail: "ETL方案：抽取->转换->加载->分析",
+                        correct: true,
+                        feedback: "✅ 正确！这是标准的数据整合方案。虽然需要额外的ETL步骤，但这是唯一能保证数据一致性的方法。效率 +25%",
+                        sanityCost: 0,
+                        bossDamage: 25,
+                        efficiency: 25,
+                        linesOfCode: 150
+                    },
+                    {
+                        text: "C. 使用Excel VLOOKUP手动匹配（数据量只有几十万条）",
+                        detail: "打开Excel，准备复制粘贴...",
+                        correct: false,
+                        feedback: "❌ 灾难！Excel处理超过100万行就会崩溃，而且JSON解析错误让你的电脑死机了。SANITY -30，老板非常生气",
+                        sanityCost: 30,
+                        bossDamage: 0
+                    },
+                    {
+                        text: "D. 直接查询：SELECT * FROM mysql.orders, '/var/log/app.log'",
+                        detail: "试图在SQL中直接写文件路径...",
+                        correct: false,
+                        feedback: "❌ SQL语法错误！关系型数据库不支持在FROM子句中直接指定文件路径。你需要先导入数据。SANITY -15",
+                        sanityCost: 15,
+                        bossDamage: 0
+                    }
+                ]
+            },
+            {
+                id: 2,
+                name: "TB级数据海啸",
+                taskId: "TASK-002",
+                title: "生产环境警报：单日日志量达到3TB，MySQL存储空间不足",
+                desc: "昨天的方案在测试环境工作良好，但生产环境的日志量是测试环境的1000倍！MySQL单表最大只能存64TB，而且查询会锁死...",
+                bgText: "02",
+                options: [
+                    {
+                        text: "A. 购买更大的SSD硬盘，扩展MySQL存储到PB级",
+                        detail: "预算申请：购买100块16TB企业级SSD...",
+                        correct: false,
+                        feedback: "❌ 成本爆炸！存储成本过高，而且MySQL的B+树索引在TB级数据下查询性能极差，全表扫描需要数小时。老板否决了预算。SANITY -25",
+                        sanityCost: 25,
+                        bossDamage: 0
+                    },
+                    {
+                        text: "B. 使用Hadoop HDFS分布式存储 + MapReduce批处理",
+                        detail: "横向扩展方案：将数据分片存储在集群中",
+                        correct: true,
+                        feedback: "✅ 明智之选！HDFS可以廉价存储PB级数据，MapReduce可以并行处理。虽然开发复杂，但这是大数据的标准架构。效率 +30%",
+                        sanityCost: 0,
+                        bossDamage: 25,
+                        efficiency: 30,
+                        linesOfCode: 500
+                    },
+                    {
+                        text: "C. 只保留最近7天的数据，删除旧数据",
+                        detail: "数据保留策略：7天后自动删除...",
+                        correct: false,
+                        feedback: "❌ 业务不可接受！老板需要分析'上个月'的数据，7天 retention 不满足需求。而且删除数据可能违反合规要求。SANITY -20",
+                        sanityCost: 20,
+                        bossDamage: 0
+                    },
+                    {
+                        text: "D. 使用awk和grep在命令行直接分析3TB日志",
+                        detail: "cat access.log | grep 'iOS' | wc -l ...",
+                        correct: false,
+                        feedback: "❌ 系统崩溃！单节点处理3TB数据导致OOM（内存溢出），服务器卡死，运维同事正在追杀你。SANITY -35",
+                        sanityCost: 35,
+                        bossDamage: 0
+                    }
+                ]
+            },
+            {
+                id: 3,
+                name: "MapReduce炼狱",
+                taskId: "TASK-003",
+                title: "需求变更：明天要看'不同年龄段用户的购买偏好'",
+                desc: "你刚写完MapReduce Job分析手机系统分布（500行Java代码），老板突然改变需求。现在需要关联用户画像表，按年龄段聚合...",
+                bgText: "03",
+                options: [
+                    {
+                        text: "A. 重写MapReduce Job，添加新的Mapper和Reducer逻辑",
+                        detail: "打开IDEA，开始写新的Java类...",
+                        correct: false,
+                        feedback: "⚠️ 可行但痛苦！你需要重新编译、打包、部署。业务分析师无法自己修改，每次需求变更都要找开发排期。技术债务累积...",
+                        sanityCost: 10,
+                        bossDamage: 10,
+                        efficiency: 10,
+                        linesOfCode: 800,
+                        isPartial: true
+                    },
+                    {
+                        text: "B. 使用Pig Latin脚本快速改写查询逻辑",
+                        detail: "Apache Pig：更高层次的抽象...",
+                        correct: false,
+                        feedback: "❌ Pig虽然比MR简单，但学习成本高，而且2015年后已停止维护。团队里只有你会Pig，其他人无法维护。SANITY -15",
+                        sanityCost: 15,
+                        bossDamage: 0
+                    },
+                    {
+                        text: "C. 培训业务分析师学习Java和MapReduce编程",
+                        detail: "组织培训：Hadoop开发入门（3天）...",
+                        correct: false,
+                        feedback: "❌ 不现实！业务分析师熟悉的是SQL，让他们学习Java分布式编程门槛太高。培训成本巨大且效果差。SANITY -20",
+                        sanityCost: 20,
+                        bossDamage: 0
+                    },
+                    {
+                        text: "D. 幻想有一个工具能把HDFS文件映射成表，直接用SQL查询",
+                        detail: "如果有个'分布式SQL引擎'就好了...",
+                        correct: true,
+                        feedback: "🌟 顿悟！你意识到需要更高层次的抽象。这正是Facebook工程师2008年面临的困境，也是Hive诞生的原因！效率 +45%",
+                        sanityCost: -10,
+                        bossDamage: 40,
+                        efficiency: 45,
+                        linesOfCode: 50,
+                        isInsight: true
+                    }
+                ]
+            },
+            {
+                id: 4,
+                name: "Hive曙光",
+                taskId: "TASK-004",
+                title: "终极方案：构建数据仓库层（Hive）",
+                desc: "你决定实现那个'幻想'：在HDFS上建立元数据层，让业务人员能用SQL分析海量数据。这不仅是技术方案，更是数据民主化的开始...",
+                bgText: "04",
+                options: [
+                    {
+                        text: "A. 创建Hive外部表映射HDFS日志目录，使用HiveQL查询",
+                        detail: "CREATE EXTERNAL TABLE logs (...) LOCATION '/user/data/logs/'",
+                        correct: true,
+                        feedback: "🎉 革命性突破！Hive将HDFS文件映射为表，自动将SQL转换为MapReduce。业务分析师现在可以自助查询，开发周期从天缩短到小时！",
+                        sanityCost: 0,
+                        bossDamage: 35,
+                        efficiency: 50,
+                        linesOfCode: 20,
+                        isFinal: true
+                    },
+                    {
+                        text: "B. 继续使用原生MapReduce，但封装成工具类库",
+                        detail: "构建MRUtils.jar，提供常用聚合函数...",
+                        correct: false,
+                        feedback: "❌ 治标不治本！虽然减少了重复代码，但业务人员仍然需要懂Java。没有解决根本问题。SANITY -10",
+                        sanityCost: 10,
+                        bossDamage: 0
+                    },
+                    {
+                        text: "C. 购买商业BI工具（如Tableau）直接连接HDFS",
+                        detail: "Tableau + HDFS Connector...",
+                        correct: false,
+                        feedback: "❌ 成本过高！商业BI工具按节点授权，HDFS集群有100+节点，license费用上百万。而且底层仍然需要SQL接口。SANITY -15",
+                        sanityCost: 15,
+                        bossDamage: 0
+                    },
+                    {
+                        text: "D. 回到MySQL，只采样1%的数据进行分析",
+                        detail: "随机采样：SELECT * FROM logs TABLESAMPLE (1 PERCENT)...",
+                        correct: false,
+                        feedback: "❌ 精度不足！采样数据无法保证前100名用户的准确性，可能导致错误的商业决策。老板要求精确数据。SANITY -20",
+                        sanityCost: 20,
+                        bossDamage: 0
+                    }
+                ]
+            }
+        ];
+
+        // Matrix Rain Effect
+        const canvas = document.getElementById('canvas-bg');
+        const ctx = canvas.getContext('2d');
+        
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        
+        const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
+        const fontSize = 14;
+        let columns = canvas.width / fontSize;
+        let drops = [];
+        
+        function initDrops() {
+            drops = [];
+            columns = canvas.width / fontSize;
+            for (let i = 0; i < columns; i++) {
+                drops[i] = Math.random() * -100;
+            }
+        }
+        initDrops();
+        
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(10, 10, 15, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = '#0F0';
+            ctx.font = fontSize + 'px monospace';
+            
+            for (let i = 0; i < drops.length; i++) {
+                const text = chars[Math.floor(Math.random() * chars.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+        
+        setInterval(drawMatrix, 35);
+
+        // Typewriter Effect
+        function typeWriter(element, text, speed = 20) {
+            return new Promise(resolve => {
+                let i = 0;
+                element.innerHTML = '';
+                element.classList.add('cursor');
+                
+                function type() {
+                    if (i < text.length) {
+                        element.innerHTML += text.charAt(i);
+                        i++;
+                        setTimeout(type, speed);
+                    } else {
+                        element.classList.remove('cursor');
+                        resolve();
+                    }
+                }
+                type();
+            });
+        }
+
+        // Render Stage
+        async function renderStage() {
+            const stage = stages[state.currentStage];
+            
+            // Update UI
+            document.getElementById('stage-num').innerText = stage.id;
+            document.getElementById('stage-name').innerText = stage.name;
+            document.getElementById('task-id').innerText = stage.taskId;
+            document.getElementById('bg-text').innerText = stage.bgText;
+            document.getElementById('level').innerText = state.currentStage + 1;
+            
+            // Type question
+            await typeWriter(document.getElementById('question-title'), stage.title);
+            document.getElementById('question-desc').innerText = stage.desc;
+            
+            // Render options
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+            
+            stage.options.forEach((opt, idx) => {
+                const card = document.createElement('div');
+                card.className = 'option-card option-card-compact rounded-lg flex items-start gap-3';
+                card.innerHTML = `
+                    <div class="mt-1 w-7 h-7 rounded border-2 border-gray-600 flex items-center justify-center text-sm mono font-bold text-gray-400 option-marker flex-shrink-0">
+                        ${String.fromCharCode(65 + idx)}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="option-text text-white">${opt.text}</div>
+                        <div class="option-detail mono">${opt.detail}</div>
+                    </div>
+                `;
+                card.onclick = () => selectOption(idx, card);
+                container.appendChild(card);
+            });
+            
+            // Add story log
+            addLog(`进入关卡 ${stage.id}: ${stage.name}`);
+            addLog('收到新的任务请求...');
+        }
+
+        function addLog(text) {
+            const log = document.getElementById('story-text');
+            const p = document.createElement('p');
+            p.className = 'text-green-400/80';
+            p.innerText = `> ${text}`;
+            log.appendChild(p);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function selectOption(idx, cardElement) {
+            const stage = stages[state.currentStage];
+            const option = stage.options[idx];
+            const allCards = document.querySelectorAll('.option-card');
+            
+            // Disable all options
+            allCards.forEach(c => c.classList.add('disabled'));
+            allCards.forEach(c => c.style.pointerEvents = 'none');
+            
+            // Show selection
+            cardElement.classList.add('selected');
+            
+            // Show feedback
+            const feedbackArea = document.getElementById('feedback-area');
+            const feedbackText = document.getElementById('feedback-text');
+            feedbackArea.classList.remove('hidden');
+            feedbackText.innerText = option.feedback;
+            
+            // Update stats
+            if (option.sanityCost > 0) {
+                state.sanity -= option.sanityCost;
+                cardElement.classList.add('wrong');
+                // Screen shake effect
+                document.getElementById('game-container').style.animation = 'glitch 0.3s';
+                setTimeout(() => document.getElementById('game-container').style.animation = '', 300);
+            } else {
+                state.sanity = Math.min(100, state.sanity + (option.sanityCost < 0 ? -option.sanityCost : 0));
+                state.bossHp -= option.bossDamage;
+                state.efficiency += option.efficiency || 0;
+                state.linesOfCode += option.linesOfCode || 0;
+                
+                if (option.isFinal) {
+                    triggerVictory();
+                    return;
+                }
+            }
+            
+            // Update UI bars
+            updateStats();
+            
+            // Add log
+            addLog(option.correct ? '执行成功！' : '执行失败...');
+            
+            // Next stage button
+            setTimeout(() => {
+                const existingBtn = feedbackArea.querySelector('button');
+                if (existingBtn) existingBtn.remove();
+                
+                const btn = document.createElement('button');
+                btn.className = 'mt-3 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded text-sm mono font-bold transition-all';
+                btn.innerText = option.correct ? '[ 进入下一关 > ]' : '[ 重试当前关卡 > ]';
+                btn.onclick = () => {
+                    if (option.correct) {
+                        state.currentStage++;
+                    } else {
+                        // Reset sanity partially on retry
+                        state.sanity = Math.min(100, state.sanity + 10);
+                    }
+                    feedbackArea.classList.add('hidden');
+                    renderStage();
+                };
+                feedbackArea.appendChild(btn);
+            }, 1000);
+        }
+
+        function updateStats() {
+            document.getElementById('sanity-bar').style.width = state.sanity + '%';
+            document.getElementById('sanity-text').innerText = state.sanity + '%';
+            document.getElementById('boss-bar').style.width = state.bossHp + '%';
+            document.getElementById('boss-hp-text').innerText = state.bossHp + '%';
+            document.getElementById('stat-efficiency').innerText = state.efficiency + '%';
+            document.getElementById('stat-efficiency-bar').style.width = state.efficiency + '%';
+            document.getElementById('stat-lines').innerText = state.linesOfCode;
+            
+            // Update tech debt color
+            const debtEl = document.getElementById('stat-debt');
+            if (state.linesOfCode > 1000) {
+                debtEl.innerText = 'HIGH';
+                debtEl.className = 'text-sm font-bold text-yellow-400 mono';
+            } else if (state.linesOfCode > 600) {
+                debtEl.innerText = 'MEDIUM';
+                debtEl.className = 'text-sm font-bold text-orange-400 mono';
+            } else {
+                debtEl.innerText = 'LOW';
+                debtEl.className = 'text-sm font-bold text-green-400 mono';
+            }
+            
+            // Color changes based on sanity
+            const sanityBar = document.getElementById('sanity-bar');
+            if (state.sanity < 30) {
+                sanityBar.className = 'h-full bg-red-500 progress-fill';
+            } else if (state.sanity < 60) {
+                sanityBar.className = 'h-full bg-yellow-500 progress-fill';
+            } else {
+                sanityBar.className = 'h-full bg-gradient-to-r from-green-400 to-green-600 progress-fill';
+            }
+        }
+
+        function triggerVictory() {
+            document.getElementById('final-efficiency').innerText = state.efficiency + '%';
+            document.getElementById('final-lines').innerText = state.linesOfCode;
+            document.getElementById('final-sanity').innerText = state.sanity + '%';
+            document.getElementById('victory-overlay').classList.remove('hidden');
+            addLog('🎉 恭喜！你成功解决了大数据架构挑战');
+            addLog('🏆 解锁称号：大数据架构师');
+            addLog('💡 核心收获：Hive = 分布式SQL on Hadoop');
+            
+            // Confetti effect
+            for (let i = 0; i < 50; i++) {
+                createParticle();
+            }
+        }
+
+        function createParticle() {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.top = '100%';
+            particle.style.width = '10px';
+            particle.style.height = '10px';
+            particle.style.background = ['#00ff41', '#00f0ff', '#ffee00'][Math.floor(Math.random() * 3)];
+            particle.style.borderRadius = '50%';
+            document.getElementById('game-container').appendChild(particle);
+            setTimeout(() => particle.remove(), 3000);
+        }
+
+        // Initialize
+        window.onload = () => {
+            renderStage();
+        };
+
+        // Handle resize
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            initDrops();
+        });
+    </script>
+</body>
+</html>
