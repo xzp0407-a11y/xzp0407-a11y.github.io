@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>大模型知识测试</title>
+    <title>Hadoop高可靠性机制演示</title>
     <style>
         * {
             margin: 0;
@@ -12,404 +12,738 @@
         }
 
         body {
-            font-family: 'Segoe UI', 'Microsoft YaHei', '黑体', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
             min-height: 100vh;
+            color: #fff;
+            overflow: hidden;
             display: flex;
-            justify-content: center;
             align-items: center;
-            padding: 20px;
+            justify-content: center;
         }
 
-        .game-container {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            max-width: 900px;
+        .container {
             width: 100%;
-            text-align: center;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 1600px;
+            aspect-ratio: 16/9;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
         }
 
-        .game-title {
-            font-size: 32px;
-            color: #2c3e50;
-            margin-bottom: 30px;
-            font-weight: bold;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .question-container {
-            background: #f8f9fa;
-            border-radius: 15px;
+        .main-stage {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
             padding: 30px;
-            margin-bottom: 30px;
-            border-left: 5px solid #667eea;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-        }
-
-        .question-text {
-            font-size: 20px;
-            color: #495057;
-            line-height: 1.6;
-            margin-bottom: 20px;
-            font-weight: 500;
-        }
-
-        .options-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-
-        .option-btn {
-            background: linear-gradient(45deg, #ffffff, #f8f9fa);
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
-            padding: 18px 15px;
-            font-size: 16px;
-            color: #495057;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-family: 'Segoe UI', 'Microsoft YaHei', '黑体', sans-serif;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             position: relative;
+            flex: 1;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             overflow: hidden;
         }
 
-        .option-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-            border-color: #667eea;
-            background: linear-gradient(45deg, #f8f9fa, #e3f2fd);
+        /* 网络拓扑图 */
+        .topology {
+            position: relative;
+            width: 100%;
+            height: 100%;
         }
 
-        .option-btn:active {
-            transform: translateY(-1px);
+        /* NameNode样式 */
+        .namenode {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, #ffd700 0%, #ffaa00 100%);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 40px rgba(255, 215, 0, 0.6), inset 0 0 20px rgba(255, 255, 255, 0.3);
+            z-index: 10;
+            animation: pulse 2s infinite;
+            border: 3px solid #fff;
         }
 
-        .option-btn.correct {
-            background: linear-gradient(45deg, #d4edda, #c3e6cb);
-            border-color: #28a745;
-            color: #155724;
-            animation: correctPulse 0.6s ease;
+        .namenode::before {
+            content: "👑";
+            font-size: 2rem;
+            margin-bottom: 5px;
         }
 
-        .option-btn.incorrect {
-            background: linear-gradient(45deg, #f8d7da, #f5c6cb);
-            border-color: #dc3545;
-            color: #721c24;
-            animation: shake 0.5s ease;
+        .namenode-label {
+            font-weight: bold;
+            color: #1a1a2e;
+            font-size: 0.8rem;
         }
 
-        @keyframes correctPulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
+        /* DataNode样式 */
+        .datanode {
+            position: absolute;
+            width: 70px;
+            height: 90px;
+            background: linear-gradient(145deg, #4a90e2 0%, #357abd 100%);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .datanode::before {
+            content: "🖥️";
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .datanode-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #fff;
+            text-align: center;
+        }
+
+        .datanode.failed {
+            background: linear-gradient(145deg, #e74c3c 0%, #c0392b 100%);
+            animation: shake 0.5s ease-in-out;
+        }
+
+        .datanode.recovering {
+            background: linear-gradient(145deg, #27ae60 0%, #229954 100%);
+            animation: glow 1.5s ease-in-out infinite;
+        }
+
+        /* 数据块样式 */
+        .block {
+            position: absolute;
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(145deg, #ff6b35 0%, #f7931e 100%);
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
+            transition: all 0.5s ease;
+            z-index: 5;
+        }
+
+        .block.unavailable {
+            opacity: 0.3;
+            filter: grayscale(100%);
+        }
+
+        .block.replicating {
+            animation: float 1s ease-in-out infinite;
+        }
+
+        /* 心跳线 */
+        .heartbeat-line {
+            position: absolute;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00ff88, transparent);
+            transform-origin: left center;
+            opacity: 0.6;
+            z-index: 1;
+        }
+
+        .heartbeat-line.active {
+            animation: heartbeat 1s ease-in-out infinite;
+        }
+
+        .heartbeat-line.broken {
+            background: linear-gradient(90deg, transparent, #ff0000, transparent);
+            animation: none;
+            opacity: 0.3;
+        }
+
+        /* 数据流 */
+        .data-flow {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #ff6b35;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #ff6b35;
+            z-index: 20;
+            display: none;
+        }
+
+        /* 状态面板 */
+        .status-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            min-width: 220px;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 0.85rem;
+        }
+
+        .status-value {
+            font-weight: bold;
+            color: #00ff88;
+        }
+
+        .status-value.warning {
+            color: #ffaa00;
+        }
+
+        .status-value.danger {
+            color: #ff4444;
+        }
+
+        /* 控制面板 */
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #ff6b35, #f7931e);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.6);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* 进度条 */
+        .progress-container {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            height: 6px;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b35, #f7931e);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 3px;
+        }
+
+        /* 警告弹窗 - 固定在顶部中央 */
+        .alert-box {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-150px);
+            background: linear-gradient(145deg, #e74c3c 0%, #c0392b 100%);
+            padding: 12px 25px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(231, 76, 60, 0.4);
+            z-index: 1000;
+            transition: transform 0.5s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-box.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* 动画定义 */
+        @keyframes pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.05); }
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
         }
 
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
+            25% { transform: translateX(-5px) rotate(-5deg); }
+            75% { transform: translateX(5px) rotate(5deg); }
         }
 
-        .feedback {
-            font-size: 18px;
-            margin: 20px 0;
-            padding: 15px;
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(39, 174, 96, 0.6); }
+            50% { box-shadow: 0 0 40px rgba(39, 174, 96, 1); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes dataTransfer {
+            0% { transform: translate(0, 0); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)); opacity: 0; }
+        }
+
+        /* 图例 */
+        .legend {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 12px;
             border-radius: 10px;
-            font-weight: bold;
-            min-height: 50px;
+            font-size: 0.8rem;
+        }
+
+        .legend-item {
             display: flex;
             align-items: center;
-            justify-content: center;
+            margin: 6px 0;
+            gap: 8px;
         }
 
-        .feedback.correct {
-            background: linear-gradient(45deg, #d4edda, #c3e6cb);
-            color: #155724;
-            border: 1px solid #28a745;
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
         }
 
-        .feedback.incorrect {
-            background: linear-gradient(45deg, #f8d7da, #f5c6cb);
-            color: #721c24;
-            border: 1px solid #dc3545;
-        }
-
-        .score-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding: 15px;
-            background: linear-gradient(45deg, #e3f2fd, #bbdefb);
-            border-radius: 10px;
-            border: 1px solid #2196f3;
-        }
-
-        .score {
-            font-size: 18px;
-            color: #1565c0;
-            font-weight: bold;
-        }
-
-        .progress {
-            font-size: 16px;
-            color: #495057;
-        }
-
-        .next-btn {
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            border-radius: 25px;
-            padding: 12px 30px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-family: 'Segoe UI', 'Microsoft YaHei', '黑体', sans-serif;
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .next-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
-        }
-
-        .next-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        .start-screen, .end-screen {
-            text-align: center;
-        }
-
-        .start-btn, .restart-btn {
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            border-radius: 25px;
-            padding: 15px 40px;
-            font-size: 18px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-family: 'Segoe UI', 'Microsoft YaHei', '黑体', sans-serif;
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
-            margin-top: 20px;
-        }
-
-        .start-btn:hover, .restart-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.6);
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        .final-score {
-            font-size: 36px;
-            color: #667eea;
-            margin: 20px 0;
-            font-weight: bold;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .game-description {
-            font-size: 16px;
-            color: #6c757d;
-            margin-bottom: 20px;
-            line-height: 1.5;
-        }
-
-        .score-value {
-            color: #28a745;
-            font-weight: bold;
-            font-size: 20px;
+        /* 响应式 */
+        @media (max-width: 1200px) {
+            .container {
+                aspect-ratio: auto;
+                height: 100vh;
+            }
+            .namenode { width: 80px; height: 80px; }
+            .namenode::before { font-size: 1.5rem; }
+            .datanode { width: 60px; height: 80px; }
+            .datanode::before { font-size: 1.2rem; }
         }
     </style>
 </head>
 <body>
-    <div class="game-container">
-        <!-- 开始界面 -->
-        <div id="startScreen" class="start-screen">
-            <h1 class="game-title">🧠 大模型知识测试</h1>
-            <p class="game-description">
-                测试你对大模型核心概念的掌握程度！<br>
-                每题20分，共5道题，满分100分。
-            </p>
-            <button class="start-btn" onclick="startGame()">开始测试</button>
-        </div>
+    <!-- 警告弹窗 -->
+    <div class="alert-box" id="alertBox">
+        <span style="font-size: 1.5rem;">⚠️</span>
+        <span id="alertText">DataNode-3 心跳超时！</span>
+    </div>
 
-        <!-- 游戏界面 -->
-        <div id="gameScreen" class="hidden">
-            <div class="score-container">
-                <div class="score">得分: <span id="score" class="score-value">0</span>/100</div>
-                <div class="progress">题目 <span id="currentQuestion">1</span> / 5</div>
+    <div class="container">
+        <div class="main-stage">
+            <!-- 图例 -->
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ffd700;"></div>
+                    <span>NameNode (主节点)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #4a90e2;"></div>
+                    <span>DataNode (数据节点)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ff6b35;"></div>
+                    <span>数据块 (Block)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #00ff88;"></div>
+                    <span>心跳信号</span>
+                </div>
             </div>
 
-            <div class="question-container">
-                <div class="question-text" id="questionText"></div>
-                <div class="options-grid" id="optionsContainer"></div>
+            <!-- 状态面板 -->
+            <div class="status-panel">
+                <h3 style="margin-bottom: 12px; color: #ff6b35; font-size: 1rem;">系统状态监控</h3>
+                <div class="status-item">
+                    <span>副本状态:</span>
+                    <span class="status-value" id="replicaStatus">3/3 健康</span>
+                </div>
+                <div class="status-item">
+                    <span>心跳检测:</span>
+                    <span class="status-value" id="heartbeatStatus">正常</span>
+                </div>
+                <div class="status-item">
+                    <span>当前阶段:</span>
+                    <span class="status-value" id="currentPhase">正常运行</span>
+                </div>
+                <div class="status-item">
+                    <span>复制进度:</span>
+                    <span class="status-value" id="copyProgress">-</span>
+                </div>
             </div>
 
-            <div class="feedback" id="feedback"></div>
-            <button class="next-btn hidden" id="nextBtn" onclick="nextQuestion()">下一题</button>
+            <!-- 拓扑图 -->
+            <div class="topology" id="topology">
+                <!-- NameNode -->
+                <div class="namenode" id="nameNode">
+                    <div class="namenode-label">NameNode</div>
+                </div>
+
+                <!-- DataNodes -->
+                <div class="datanode" id="dn1" style="top: 10%; left: 20%;">
+                    <div class="datanode-label">DataNode-1</div>
+                </div>
+                <div class="datanode" id="dn2" style="top: 10%; left: 70%;">
+                    <div class="datanode-label">DataNode-2</div>
+                </div>
+                <div class="datanode" id="dn3" style="top: 75%; left: 10%;">
+                    <div class="datanode-label">DataNode-3</div>
+                </div>
+                <div class="datanode" id="dn4" style="top: 75%; left: 40%;">
+                    <div class="datanode-label">DataNode-4</div>
+                </div>
+                <div class="datanode" id="dn5" style="top: 75%; left: 70%;">
+                    <div class="datanode-label">DataNode-5</div>
+                </div>
+                <div class="datanode" id="dn6" style="top: 40%; left: 85%;">
+                    <div class="datanode-label">DataNode-6</div>
+                </div>
+
+                <!-- 数据块 -->
+                <div class="block" id="block1" style="top: 15%; left: 22%;">A</div>
+                <div class="block" id="block2" style="top: 80%; left: 12%;">A</div>
+                <div class="block" id="block3" style="top: 80%; left: 72%;">A</div>
+
+                <!-- 心跳线 (动态生成) -->
+                <div id="heartbeatLines"></div>
+
+                <!-- 数据流粒子 -->
+                <div class="data-flow" id="dataFlow"></div>
+            </div>
+
+            <!-- 进度条 -->
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
         </div>
 
-        <!-- 结束界面 -->
-        <div id="endScreen" class="end-screen hidden">
-            <h1 class="game-title">🎉 测试完成！</h1>
-            <div class="final-score">最终得分: <span id="finalScore">0</span>/100</div>
-            <div id="resultMessage"></div>
-            <button class="restart-btn" onclick="restartGame()">重新开始</button>
+        <!-- 控制面板 -->
+        <div class="controls">
+            <button class="btn btn-primary" id="startBtn" onclick="startSimulation()">开始演示</button>
+            <button class="btn btn-secondary" id="resetBtn" onclick="resetSimulation()">重置</button>
+            <button class="btn btn-secondary" onclick="toggleAutoPlay()" id="autoBtn">自动播放: 关</button>
         </div>
     </div>
 
     <script>
-        const questions = [
-            {
-                question: "一种基于深度学习的自然语言处理模型，能够理解和生成人类语言，通过大量文本数据训练获得语言理解和生成能力。",
-                options: ["大模型幻觉", "LLM", "微调", "推理"],
-                correct: 1,
-                explanation: "正确！LLM（Large Language Model）是大型语言模型的简称，通过大规模数据训练，具备强大的语言理解和生成能力。"
-            },
-            {
-                question: "用户输入给AI模型的指令或问题，用于引导模型产生特定的输出或行为。",
-                options: ["LLM", "推理", "Prompt", "微调"],
-                correct: 2,
-                explanation: "正确！Prompt（提示词）是用户与AI交互的关键，通过精心设计可以引导AI产生更符合预期的输出。"
-            },
-            {
-                question: "AI模型生成看似合理但实际上是虚假、不准确或完全编造的信息的现象，模型会自信地陈述这些错误信息。",
-                options: ["推理", "大模型幻觉", "微调", "Prompt"],
-                correct: 1,
-                explanation: "正确！大模型幻觉是指AI生成看似合理但实际错误的内容，这是大模型需要重点解决的问题之一。"
-            },
-            {
-                question: "在预训练模型基础上，使用特定领域或任务的数据进行额外训练，使模型适应特定应用场景的过程。",
-                options: ["推理", "LLM", "微调", "大模型幻觉"],
-                correct: 2,
-                explanation: "正确！微调是在预训练基础上进行针对性训练，让模型更好地适应特定任务和领域需求。"
-            },
-            {
-                question: "模型使用训练好的参数对新输入数据进行处理并产生输出的过程，是模型实际应用的阶段。",
-                options: ["微调", "Prompt", "推理", "大模型幻觉"],
-                correct: 2,
-                explanation: "正确！推理是模型运用学到的知识进行分析和判断的过程，是AI产生输出的核心机制。"
-            }
-        ];
+        let currentStep = 0;
+        let autoPlay = false;
+        let autoPlayInterval;
 
-        let currentQuestionIndex = 0;
-        let score = 0;
-        let answered = false;
+        // 初始化心跳线
+        function initHeartbeatLines() {
+            const linesContainer = document.getElementById('heartbeatLines');
+            linesContainer.innerHTML = '';
+            const nameNode = document.getElementById('nameNode');
+            const nameRect = nameNode.getBoundingClientRect();
+            const containerRect = document.getElementById('topology').getBoundingClientRect();
+            
+            const nameX = nameRect.left - containerRect.left + nameRect.width / 2;
+            const nameY = nameRect.top - containerRect.top + nameRect.height / 2;
 
-        function startGame() {
-            document.getElementById('startScreen').classList.add('hidden');
-            document.getElementById('gameScreen').classList.remove('hidden');
-            currentQuestionIndex = 0;
-            score = 0;
-            updateScore();
-            showQuestion();
-        }
+            for (let i = 1; i <= 6; i++) {
+                const dn = document.getElementById(`dn${i}`);
+                const dnRect = dn.getBoundingClientRect();
+                const dnX = dnRect.left - containerRect.left + dnRect.width / 2;
+                const dnY = dnRect.top - containerRect.top + dnRect.height / 2;
 
-        function updateScore() {
-            document.getElementById('score').textContent = score;
-        }
-
-        function showQuestion() {
-            answered = false;
-            const question = questions[currentQuestionIndex];
-            
-            document.getElementById('questionText').textContent = question.question;
-            document.getElementById('currentQuestion').textContent = currentQuestionIndex + 1;
-            
-            const optionsContainer = document.getElementById('optionsContainer');
-            optionsContainer.innerHTML = '';
-            
-            question.options.forEach((option, index) => {
-                const button = document.createElement('button');
-                button.className = 'option-btn';
-                button.textContent = option;
-                button.onclick = () => selectOption(index);
-                optionsContainer.appendChild(button);
-            });
-            
-            document.getElementById('feedback').textContent = '';
-            document.getElementById('feedback').className = 'feedback';
-            document.getElementById('nextBtn').classList.add('hidden');
-        }
-
-        function selectOption(selectedIndex) {
-            if (answered) return;
-            answered = true;
-            
-            const question = questions[currentQuestionIndex];
-            const buttons = document.querySelectorAll('.option-btn');
-            const feedback = document.getElementById('feedback');
-            
-            buttons.forEach((button, index) => {
-                button.style.pointerEvents = 'none';
-                if (index === question.correct) {
-                    button.classList.add('correct');
-                } else if (index === selectedIndex) {
-                    button.classList.add('incorrect');
-                }
-            });
-            
-            if (selectedIndex === question.correct) {
-                score += 20; // 每题20分
-                updateScore(); // 立即更新得分显示
-                feedback.textContent = '🎉 回答正确！' + question.explanation;
-                feedback.className = 'feedback correct';
-            } else {
-                feedback.textContent = '❌ 回答错误。' + question.explanation;
-                feedback.className = 'feedback incorrect';
-            }
-            
-            document.getElementById('nextBtn').classList.remove('hidden');
-        }
-
-        function nextQuestion() {
-            currentQuestionIndex++;
-            if (currentQuestionIndex < questions.length) {
-                showQuestion();
-            } else {
-                endGame();
+                const line = document.createElement('div');
+                line.className = 'heartbeat-line active';
+                line.id = `line${i}`;
+                
+                const length = Math.sqrt(Math.pow(dnX - nameX, 2) + Math.pow(dnY - nameY, 2));
+                const angle = Math.atan2(dnY - nameY, dnX - nameX) * 180 / Math.PI;
+                
+                line.style.width = `${length}px`;
+                line.style.left = `${nameX}px`;
+                line.style.top = `${nameY}px`;
+                line.style.transform = `rotate(${angle}deg)`;
+                
+                linesContainer.appendChild(line);
             }
         }
 
-        function endGame() {
-            document.getElementById('gameScreen').classList.add('hidden');
-            document.getElementById('endScreen').classList.remove('hidden');
-            document.getElementById('finalScore').textContent = score;
-            
-            let message = '';
-            if (score === 100) {
-                message = '🏆 完美！你对大模型概念掌握得非常好！';
-            } else if (score >= 80) {
-                message = '👏 很棒！你对大模型有很好的理解！';
-            } else if (score >= 60) {
-                message = '👍 不错！继续加强对大模型概念的学习！';
-            } else {
-                message = '📚 需要多加练习，建议复习相关概念！';
-            }
-            
-            document.getElementById('resultMessage').innerHTML = `<p style="font-size: 18px; color: #495057; margin: 20px 0;">${message}</p>`;
+        // 更新进度条
+        function updateProgress(percent) {
+            document.getElementById('progressBar').style.width = `${percent}%`;
         }
 
-        function restartGame() {
-            document.getElementById('endScreen').classList.add('hidden');
-            document.getElementById('startScreen').classList.remove('hidden');
+        // 显示警告
+        function showAlert(text) {
+            const alertBox = document.getElementById('alertBox');
+            document.getElementById('alertText').textContent = text;
+            alertBox.classList.add('show');
+            setTimeout(() => {
+                alertBox.classList.remove('show');
+            }, 3000);
         }
+
+        // 场景1：正常运行
+        function scene1() {
+            updateProgress(20);
+            document.getElementById('currentPhase').textContent = "正常运行";
+            document.getElementById('replicaStatus').textContent = "3/3 健康";
+            document.getElementById('replicaStatus').className = "status-value";
+            document.getElementById('heartbeatStatus').textContent = "正常";
+            document.getElementById('heartbeatStatus').className = "status-value";
+            document.getElementById('copyProgress').textContent = "-";
+
+            for (let i = 1; i <= 6; i++) {
+                document.getElementById(`dn${i}`).className = 'datanode';
+                document.getElementById(`line${i}`).className = 'heartbeat-line active';
+            }
+            
+            document.getElementById('block1').className = 'block';
+            document.getElementById('block2').className = 'block';
+            document.getElementById('block3').className = 'block';
+            
+            document.getElementById('block1').style.top = '15%';
+            document.getElementById('block1').style.left = '22%';
+            document.getElementById('block2').style.top = '80%';
+            document.getElementById('block2').style.left = '12%';
+            document.getElementById('block3').style.top = '80%';
+            document.getElementById('block3').style.left = '72%';
+        }
+
+        // 场景2：故障发生
+        function scene2() {
+            updateProgress(40);
+            document.getElementById('currentPhase').textContent = "故障检测";
+            document.getElementById('replicaStatus').textContent = "2/3 警告";
+            document.getElementById('replicaStatus').className = "status-value warning";
+            document.getElementById('heartbeatStatus').textContent = "异常";
+            document.getElementById('heartbeatStatus').className = "status-value danger";
+
+            const dn3 = document.getElementById('dn3');
+            dn3.classList.add('failed');
+            document.getElementById('line3').className = 'heartbeat-line broken';
+            document.getElementById('block2').classList.add('unavailable');
+            
+            showAlert("DataNode-3 心跳超时！");
+        }
+
+        // 场景3：检测与决策
+        function scene3() {
+            updateProgress(60);
+            document.getElementById('currentPhase').textContent = "副本重建准备";
+            document.getElementById('copyProgress').textContent = "准备中";
+
+            const nameNode = document.getElementById('nameNode');
+            nameNode.style.animation = 'pulse 0.5s ease 3';
+            document.getElementById('dn2').classList.add('recovering');
+            
+            setTimeout(() => {
+                nameNode.style.animation = 'pulse 2s infinite';
+            }, 1500);
+        }
+
+        // 场景4：复制过程
+        function scene4() {
+            updateProgress(80);
+            document.getElementById('currentPhase').textContent = "数据复制中";
+            
+            const block1 = document.getElementById('block1');
+            const newBlock = block1.cloneNode(true);
+            newBlock.id = 'newBlock';
+            newBlock.classList.add('replicating');
+            document.getElementById('topology').appendChild(newBlock);
+            
+            const dn1 = document.getElementById('dn1');
+            const dn2 = document.getElementById('dn2');
+            const container = document.getElementById('topology');
+            
+            const dn1Rect = dn1.getBoundingClientRect();
+            const dn2Rect = dn2.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+            
+            const startX = dn1Rect.left - containerRect.left + 30;
+            const startY = dn1Rect.top - containerRect.top + 30;
+            const endX = dn2Rect.left - containerRect.left + 30;
+            const endY = dn2Rect.top - containerRect.top + 30;
+            
+            newBlock.style.left = `${startX}px`;
+            newBlock.style.top = `${startY}px`;
+            
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += 2;
+                document.getElementById('copyProgress').textContent = `${progress}%`;
+                if (progress >= 100) clearInterval(progressInterval);
+            }, 50);
+            
+            setTimeout(() => {
+                newBlock.style.transition = 'all 2s ease-in-out';
+                newBlock.style.left = `${endX}px`;
+                newBlock.style.top = `${endY}px`;
+            }, 100);
+            
+            const dataFlow = document.getElementById('dataFlow');
+            dataFlow.style.display = 'block';
+            dataFlow.style.left = `${startX}px`;
+            dataFlow.style.top = `${startY}px`;
+            dataFlow.style.setProperty('--tx', `${endX - startX}px`);
+            dataFlow.style.setProperty('--ty', `${endY - startY}px`);
+            dataFlow.style.animation = 'dataTransfer 2s ease-in-out';
+            
+            setTimeout(() => {
+                dataFlow.style.display = 'none';
+                newBlock.style.transition = 'none';
+                newBlock.style.left = '72%';
+                newBlock.style.top = '15%';
+            }, 2100);
+        }
+
+        // 场景5：恢复完成
+        function scene5() {
+            updateProgress(100);
+            document.getElementById('currentPhase').textContent = "恢复完成";
+            document.getElementById('replicaStatus').textContent = "3/3 健康";
+            document.getElementById('replicaStatus').className = "status-value";
+            document.getElementById('heartbeatStatus').textContent = "正常";
+            document.getElementById('heartbeatStatus').className = "status-value";
+            document.getElementById('copyProgress').textContent = "完成";
+
+            document.getElementById('dn3').classList.remove('failed');
+            document.getElementById('block2').remove();
+            
+            showAlert("副本重建完成！系统恢复正常");
+            
+            setTimeout(() => {
+                document.getElementById('nameNode').style.boxShadow = '0 0 60px rgba(255, 215, 0, 0.8)';
+                setTimeout(() => {
+                    document.getElementById('nameNode').style.boxShadow = '';
+                }, 1000);
+            }, 500);
+        }
+
+        // 开始演示
+        async function startSimulation() {
+            if (currentStep > 0) return;
+            
+            document.getElementById('startBtn').disabled = true;
+            
+            scene1();
+            await sleep(3000);
+            
+            currentStep = 1;
+            scene2();
+            await sleep(4000);
+            
+            currentStep = 2;
+            scene3();
+            await sleep(4000);
+            
+            currentStep = 3;
+            scene4();
+            await sleep(5000);
+            
+            currentStep = 4;
+            scene5();
+            
+            document.getElementById('startBtn').disabled = false;
+            
+            if (autoPlay) {
+                setTimeout(() => {
+                    resetSimulation();
+                    setTimeout(startSimulation, 500);
+                }, 3000);
+            }
+        }
+
+        // 重置
+        function resetSimulation() {
+            currentStep = 0;
+            updateProgress(0);
+            
+            const newBlock = document.getElementById('newBlock');
+            if (newBlock) newBlock.remove();
+            
+            if (!document.getElementById('block2')) {
+                const topology = document.getElementById('topology');
+                const block2 = document.createElement('div');
+                block2.className = 'block';
+                block2.id = 'block2';
+                block2.textContent = 'A';
+                block2.style.top = '80%';
+                block2.style.left = '12%';
+                topology.appendChild(block2);
+            }
+            
+            scene1();
+            document.getElementById('startBtn').disabled = false;
+        }
+
+        // 自动播放切换
+        function toggleAutoPlay() {
+            autoPlay = !autoPlay;
+            document.getElementById('autoBtn').textContent = `自动播放: ${autoPlay ? '开' : '关'}`;
+            if (autoPlay && currentStep === 0) {
+                startSimulation();
+            }
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // 初始化
+        window.onload = function() {
+            initHeartbeatLines();
+            scene1();
+        };
+
+        window.onresize = function() {
+            initHeartbeatLines();
+        };
     </script>
 </body>
 </html>
